@@ -80,11 +80,7 @@ def users_feature(properties_list, properties_number, feature_dim):
     with open(path + 'node.json') as file:
         users = ijson.items(file, 'item')
         users_feature_dict = dict()
-        flag = 0
         for user in tqdm(users, desc='loading user properties'):
-            flag += 1
-            if flag >= 8000000:
-                break
             if user['id'].find('u') == -1:      # 寻找用户节点
                 continue
             users_feature_dict[user['id']] = list()
