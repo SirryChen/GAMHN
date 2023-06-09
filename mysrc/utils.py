@@ -2,15 +2,16 @@ import argparse
 import multiprocessing
 from collections import defaultdict
 from operator import index
-
+import torch
 import numpy as np
 from six import iteritems
 from sklearn.metrics import (auc, f1_score, precision_recall_curve,
                              roc_auc_score)
 from tqdm import tqdm
-
+import torch.nn.functional as func
 from walk import RWGraph
-
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, matthews_corrcoef, \
+    roc_auc_score, precision_recall_curve, auc
 
 class Vocab(object):
 
@@ -22,10 +23,10 @@ class Vocab(object):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input', type=str, default='/data1/botdet/GAMHN-master/data/amazon',
+    parser.add_argument('--input', type=str, default='/data1/botdet/GATNE-master/data/amazon',
                         help='Input dataset path')
 
-    parser.add_argument('--features', type=str, default=None,
+    parser.add_argument('--features', type=str, default=True,
                         help='Input node features')
 
     parser.add_argument('--walk-file', type=str, default=None,
@@ -76,13 +77,13 @@ def parse_args():
     return parser.parse_args()
 
 # 输入：[(node1,node2),(node3,node4)...] 每次输入一种边类型 对应的节点对集合
-# 输出：{node1:[node2,node3...], node2:[node4,node10...]...} 与节点node_i存在特定边类型 的节点集合
+# 输出：{node1:[node2,node3...], node2:[node4,node10...]...} 与节点node_i存在特定边类型 的节点集合，已为无向图
 def get_G_from_edges(edges):
     edge_dict = defaultdict(set)
     for edge in edges:
         u, v = str(edge[0]), str(edge[1])
         edge_dict[u].add(v)     # 与节点u存在某种边类型 的集合
-        edge_dict[v].add(u)     # 与节点v存在某种边类型 的集合
+        edge_dict[v].add(u)
     return edge_dict
 
 
@@ -151,7 +152,7 @@ def load_feature_data(f_name):
 
 
 # 输入：{edge_type1:[(node1,node2),(node3,node4)...], edge_type2:[()]...} 每一种边类型 对应的节点对 集合
-# 输出：[node1,node2...]   节点集合(进程池中的)
+# 输出：[node1,node2...]   节点集合(进程池中的),edge embedding
 def generate_walks(network_data, num_walks, walk_length, schema, file_name, num_workers):
     if schema is not None:      # 用于包含多个节点类型
         node_type = load_node_type(file_name + '/node_type.txt')
@@ -254,7 +255,8 @@ def generate(network_data, num_walks, walk_length, schema, file_name, window_siz
     return vocab, index2word, train_pairs
 
 
-# 输出：neighbors[ node_index1[ edge_type1[node_index, ],... ],  node_index2[ edge_type2[] ],...  ] 每个节点在每种关系上的列表 增减为 固定长度neighbor_samples
+# 输出： 每个节点在每种关系上的列表 增减为 固定长度neighbor_samples，列表按node_index索引
+# neighbors[ node_index1[ edge_type1[node_index, ],... ],  node_index2[ edge_type2[] ],...  ]
 def generate_neighbors(network_data, vocab, num_nodes, edge_types, neighbor_samples):
     edge_type_count = len(edge_types)
     neighbors = [[[] for __ in range(edge_type_count)] for _ in range(num_nodes)]   # neighbors[ node_index1[ edge_type1[],... ],  node_index2[ edge_type2[] ],...  ]
@@ -315,4 +317,11 @@ def evaluate(model, true_edges, false_edges):
     y_true = np.array(true_list)
     y_scores = np.array(prediction_list)
     ps, rs, _ = precision_recall_curve(y_true, y_scores)
+
     return roc_auc_score(y_true, y_scores), f1_score(y_true, y_pred), auc(rs, ps)
+
+
+
+
+
+

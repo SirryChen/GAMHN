@@ -6,7 +6,7 @@ GAMHN
 * 一种是直接修改源代码的数据输入部分
 * 一种是按照数据接入格式生成文件，然后传入文件
 ### 第二种
-对twibot-20数据集进行数据预处理，主要生成五个文件
+对twibot-20数据集进行数据预处理，主要生成五个文件，`label`涉及到推荐系统中的负采样方法（就是用户不喜欢的商品，强定义为未交互过的商品集合中的一部分）
 - train.txt: Each line represents an edge, which contains three tokens `<edge_type> <node1> <node2>` where each token can be either a number or a string.
 - valid.txt: Each line represents an edge or a non-edge, which contains four tokens `<edge_type> <node1> <node2> <label>`, where `<label>` is either 1 or 0 denoting an edge or a non-edge
 - test.txt: the same format with valid.txt
@@ -32,4 +32,4 @@ GATNE模型输出的是每个节点n关于每种边类型r的一个表示向量�
 利用`semantic attention network`生成每个表示向量的权重，再聚合在一起，为每个用户生成一个向量（注意这里只对用户生成，不包括推文）  
 经过神经网络输出二维向量，即用户概率、机器人概率
 
-![model_picture](model_picture.png)
+![model_picture](picture/model_picture.png)

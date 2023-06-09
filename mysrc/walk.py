@@ -35,7 +35,7 @@ def initializer(init_G, init_node_type):
 
 
 class RWGraph():
-    # nx_G：{node1:[node2,node3...], node2:[node4,node10...]...} 与节点node_i存在特定边类型 的节点集合，已转为无向图！
+    # nx_G：{node1:[node2,node3...], node2:[node4,node10...]...} 与节点node_i存在特定边类型 的节点集合
     def __init__(self, nx_G, node_type_arr=None, num_workers=16):
         self.G = nx_G
         self.node_type = node_type_arr
@@ -65,5 +65,5 @@ class RWGraph():
                                           initargs=(self.G, self.node_type)) as pool:
                     walks = list(pool.imap(walk, ((walk_length, node, schema_iter) for node in tqdm(self.node_list(nodes, num_walks)) if schema_iter.split('-')[0] == self.node_type[node]), chunksize=512))
                 all_walks.extend(walks)
-        print(all_walks)
+
         return all_walks
